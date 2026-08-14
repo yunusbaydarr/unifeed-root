@@ -1,0 +1,31 @@
+{
+  "name": "docker-kafka-mcp",
+  "description": "Container, Kafka topic ve Redis stream izleme arayuzu. 01_infra_devops ve be_kafka_worker/be_chat_realtime subagent'lari tarafindan kullanilir.",
+  "transport": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-docker"],
+  "targets": {
+    "compose_file": "docker-compose.yml",
+    "services": ["postgres", "redis", "kafka", "backend", "frontend"]
+  },
+  "kafka": {
+    "bootstrap_servers": "${env:UNIFEED_KAFKA_BOOTSTRAP}",
+    "topics": ["email-events", "system-logs", "audit-logs"],
+    "mode": "kraft"
+  },
+  "redis": {
+    "url": "${env:UNIFEED_REDIS_URL}",
+    "monitored_key_patterns": [
+      "refresh:*",
+      "story:zset:*",
+      "club_role:*",
+      "presence:*"
+    ]
+  },
+  "permissions": {
+    "allow_container_restart": true,
+    "allow_topic_create": true,
+    "allow_topic_delete": false
+  },
+  "scope": ["logs", "health-check", "topic-inspect", "key-inspect"]
+}

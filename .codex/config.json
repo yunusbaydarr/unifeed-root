@@ -1,0 +1,60 @@
+{
+  "project": "unifeed",
+  "version": "1.0.0",
+  "description": "Universite ici sosyal medya platformu - CodeX ajan orkestrasyon konfigurasyonu",
+  "documents": {
+    "prd": "docs/PROMPT.md",
+    "architecture": "docs/ARCHITECT.md",
+    "decisionLog": "docs/DECISIONS.md",
+    "promptHistory": "docs/PROMPT_HISTORY.md",
+    "designSystem": "docs/DESIGN_SYSTEM.md"
+
+  },
+  "global_rules": {
+    "enforce_architect_md": true,
+    "block_console_log": true,
+    "require_solid_review": true,
+    "require_i18n_coverage": ["tr", "en"],
+    "soft_delete_required": true,
+    "max_service_class_lines": 300,
+    "unresolved_decision_requires_log": "docs/DECISIONS.md",
+    "log_every_user_prompt_before_action": "docs/PROMPT_HISTORY.md"
+  },
+  "agent_execution_order": [
+    "00_discovery_planner",
+    "01_infra_devops",
+    "02_db_architect",
+    "03_be_core",
+    "04_be_features",
+    "05_fe_architect",
+    "06_qa_validator",
+    "07_git_vcs_auditor"
+  ],
+  "agents_path": ".codex/agents",
+  "subagents_path": ".codex/subagents",
+  "skills_path": ".codex/skills",
+  "hooks": {
+    "pre_agent_execution": ".codex/hooks/pre-agent-execution.sh",
+    "post_code_generation": ".codex/hooks/post-code-generation.sh",
+    "on_contract_violation": ".codex/hooks/on-contract-violation.sh",
+    "pre_commit": ".codex/hooks/pre-commit-gatekeeper.sh",
+    "pre_deploy": ".codex/hooks/pre-deploy-prod-guard.sh"
+  },
+  "mcp_servers": [
+    ".codex/mcp/postgres-mcp.json",
+    ".codex/mcp/git-mcp.json",
+    ".codex/mcp/docker-kafka-mcp.json",
+    ".codex/mcp/filesystem-mcp.json"
+  ],
+  "environments": {
+    "dev": {
+      "profile": "dev",
+      "allow_test_domains": true
+    },
+    "prod": {
+      "profile": "prod",
+      "allow_test_domains": false,
+      "guard": "pre-deploy-prod-guard.sh"
+    }
+  }
+}

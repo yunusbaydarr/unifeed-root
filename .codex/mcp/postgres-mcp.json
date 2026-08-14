@@ -1,0 +1,16 @@
+{
+  "name": "postgres-mcp",
+  "description": "PostgreSQL veritabanina dogrudan baglanti ve DDL test arayuzu. 02_db_architect ve 06_qa_validator tarafindan kullanilir.",
+  "transport": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"],
+  "env": {
+    "DATABASE_URL": "${env:UNIFEED_DB_URL}"
+  },
+  "permissions": {
+    "allow_write": false,
+    "allow_ddl": false,
+    "note": "Sadece 02_db_architect agent'i migration surecinde gecici olarak allow_ddl=true ile calistirilir; bu deger config.json agent_execution_order icinde runtime'da override edilir."
+  },
+  "scope": ["schema-inspection", "query-explain", "migration-dry-run"]
+}

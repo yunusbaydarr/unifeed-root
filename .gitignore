@@ -1,0 +1,9 @@
+.env
+.m2/
+.m2-docker/
+**/target/
+**/node_modules/
+**/.idea/
+*.iml
+unifeed-backend/uploads/**
+!unifeed-backend/uploads/**/.gitkeep

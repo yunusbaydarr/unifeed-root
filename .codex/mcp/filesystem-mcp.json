@@ -1,0 +1,27 @@
+{
+  "name": "filesystem-mcp",
+  "description": "Izinli klasorlerde (sandboxed) dosya I/O arayuzu. Tum agent/subagent'lar tarafindan kod uretimi ve uploads/ dizini islemleri icin kullanilir.",
+  "transport": "stdio",
+  "command": "npx",
+  "args": [
+    "-y",
+    "@modelcontextprotocol/server-filesystem",
+    "./unifeed-backend",
+    "./unifeed-frontend",
+    "./docs",
+    "./uploads"
+  ],
+  "permissions": {
+    "read": true,
+    "write": true,
+    "delete": false,
+    "note": "delete=false: fiziksel dosya silme yalnizca be_media_processor subagent'inin kullanici tarafindan tetiklenen 'hesap silme' akisinda, ayri bir onay adimiyla yapilir."
+  },
+  "denied_paths": [
+    "**/node_modules/**",
+    "**/.env",
+    "**/*.pem",
+    "**/*.key"
+  ],
+  "scope": ["read-file", "write-file", "list-directory"]
+}
