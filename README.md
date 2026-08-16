@@ -28,7 +28,7 @@ docker info
 ### 1. Repoyu klonlayın
 
 ```bash
-git clone <GITHUB_REPOSITORY_URL> unifeed-root
+git clone https://github.com/yunusbaydarr/unifeed-root.git
 cd unifeed-root
 ```
 
@@ -92,12 +92,6 @@ Ardından backend'i yeniden oluşturun:
 
 ```bash
 docker compose --profile app up -d --build backend
-```
-
-Demo kullanıcılarının parolası:
-
-```text
-Demo123!
 ```
 
 Seed yalnızca `dev`/`local` profilinde çalışır ve aynı demo verisini ikinci kez eklemez. Demo hesapları üretim ortamında kullanılmamalıdır.
