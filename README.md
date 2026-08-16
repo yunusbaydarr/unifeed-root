@@ -5,7 +5,6 @@ UniFeed, üniversite öğrencileri ve kulüpleri için geliştirilmiş Campus Hu
 
 ## İçindekiler
 
-- [Gereksinimler](#gereksinimler)
 - [Hızlı kurulum](#hızlı-kurulum)
 - [Servisler ve adresler](#servisler-ve-adresler)
 - [Demo verisi](#demo-verisi)
@@ -14,13 +13,7 @@ UniFeed, üniversite öğrencileri ve kulüpleri için geliştirilmiş Campus Hu
 - [Sorun giderme](#sorun-giderme)
 - [Dokümantasyon haritası](#dokümantasyon-haritası)
 
-## Gereksinimler
 
-1. Docker Desktop güncel bir sürüm.
-2. Docker Desktop içindeki Linux containers ve WSL2 backend açık olmalı (Windows için).
-3. Git.
-4. Boş portlar: `5173`, `8080`, `5432`, `6379`, `9092`, `8025`, `1025`.
-5. İlk image indirmeleri için internet bağlantısı.
 
 Docker'ın çalıştığını doğrulayın:
 
