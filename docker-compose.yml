@@ -2,27 +2,30 @@ name: unifeed-dev
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment: { POSTGRES_DB: "${POSTGRES_DB:-unifeed}", POSTGRES_USER: "${POSTGRES_USER:-unifeed}", POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}" }
     ports: ["${POSTGRES_PORT:-5432}:5432"]
     volumes: ["postgres-data:/var/lib/postgresql/data"]
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"], interval: 10s, timeout: 5s, retries: 5 }
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports: ["${REDIS_PORT:-6379}:6379"]
     volumes: ["redis-data:/data"]
     healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 10s, timeout: 5s, retries: 5 }
   kafka:
     image: apache/kafka:3.9.1
+    restart: unless-stopped
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:${KAFKA_HOST_PORT:-9092}"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -37,17 +40,24 @@ services:
     image: apache/kafka:3.9.1
     depends_on: { kafka: { condition: service_healthy } }
     restart: "no"
-    command: ["/bin/bash", "-ec", "for topic in email-events system-logs audit-logs; do /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic $$topic --partitions 1 --replication-factor 1; done"]
+    command: ["/bin/bash", "-ec", "for topic in email-events system-logs audit-logs; do /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic $$topic --partitions 1 --replication-factor 1; done"]
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports: ["1025:1025", "${MAILPIT_UI_PORT:-8025}:8025"]
+    healthcheck: { test: ["CMD", "/mailpit", "readyz"], interval: 10s, timeout: 5s, retries: 5 }
   backend:
     profiles: ["app"]
+    restart: unless-stopped
     build: { context: ./unifeed-backend }
-    environment: { SPRING_PROFILES_ACTIVE: dev, SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-unifeed}", SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER:-unifeed}", SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}", SPRING_DATA_REDIS_HOST: redis, SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092, JWT_SIGNING_KEY: "${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}", GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in .env}", GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in .env}", MAIL_HOST: "${MAIL_HOST:-localhost}", MAIL_PORT: "${MAIL_PORT:-1025}", MAIL_USERNAME: "${MAIL_USERNAME:-}", MAIL_PASSWORD: "${MAIL_PASSWORD:-}" }
+    environment: { SPRING_PROFILES_ACTIVE: dev, SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-unifeed}", SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER:-unifeed}", SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}", SPRING_DATA_REDIS_HOST: redis, SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092, JWT_SIGNING_KEY: "${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}", APP_SEED_ENABLED: "${APP_SEED_ENABLED:-false}", MAIL_HOST: "${MAIL_HOST:-mailpit}", MAIL_PORT: "${MAIL_PORT:-1025}", MAIL_USERNAME: "${MAIL_USERNAME:-}", MAIL_PASSWORD: "${MAIL_PASSWORD:-}" }
     ports: ["${BACKEND_PORT:-8080}:8080"]
     volumes: ["./unifeed-backend/uploads:/app/uploads"]
-    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_healthy }, kafka-init: { condition: service_completed_successfully } }
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_healthy }, kafka-init: { condition: service_completed_successfully }, mailpit: { condition: service_healthy } }
   frontend:
     profiles: ["app"]
+    restart: unless-stopped
     build: { context: ./unifeed-frontend }
-    ports: ["${FRONTEND_PORT:-5173}:5173"]
+    ports: ["${FRONTEND_PORT:-5173}:80"]
     depends_on: [backend]
 volumes: { postgres-data: {}, redis-data: {}, kafka-data: {} }

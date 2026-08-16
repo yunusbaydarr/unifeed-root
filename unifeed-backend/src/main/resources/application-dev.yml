@@ -4,21 +4,22 @@ spring:
   data: { redis: { host: "${SPRING_DATA_REDIS_HOST:localhost}", port: "${SPRING_DATA_REDIS_PORT:6379}" } }
   kafka:
     bootstrap-servers: "${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}"
-    producer: { value-serializer: org.springframework.kafka.support.serializer.JsonSerializer }
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties: { max.block.ms: 2000, delivery.timeout.ms: 5000, request.timeout.ms: 3000 }
     consumer: { value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer, properties: { spring.json.trusted.packages: "app.unifeed.*" } }
   servlet: { multipart: { max-file-size: 10MB, max-request-size: 10MB } }
-  mail: { host: "${MAIL_HOST:localhost}", port: "${MAIL_PORT:1025}", username: "${MAIL_USERNAME:}", password: "${MAIL_PASSWORD:}" }
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: "${GOOGLE_CLIENT_ID}"
-            client-secret: "${GOOGLE_CLIENT_SECRET}"
-            scope: [openid, profile, email]
+  mail:
+    host: "${MAIL_HOST:localhost}"
+    port: "${MAIL_PORT:1025}"
+    username: "${MAIL_USERNAME:}"
+    password: "${MAIL_PASSWORD:}"
+    properties: { mail.smtp.connectiontimeout: 3000, mail.smtp.timeout: 5000, mail.smtp.writetimeout: 5000 }
 app:
   security:
     allow-test-domains: true
+    secure-cookie: false
     jwt-secret: ${JWT_SIGNING_KEY:local-development-key-must-be-at-least-32-bytes}
   storage: { uploads-root: "${APP_STORAGE_UPLOADS_ROOT:uploads}", avatar-max-size-bytes: "${APP_STORAGE_AVATAR_MAX_SIZE_BYTES:2097152}", post-media-max-size-bytes: "${APP_STORAGE_POST_MEDIA_MAX_SIZE_BYTES:8388608}", club-cover-max-size-bytes: "${APP_STORAGE_CLUB_COVER_MAX_SIZE_BYTES:5242880}" }
-  frontend: { oauth-success-url: "${OAUTH_SUCCESS_URL:http://localhost:5173/auth/callback}" }
+  frontend: { allowed-origins: "${FRONTEND_ALLOWED_ORIGINS:http://localhost:5173}" }
+  outbox: { poll-interval: 2s, send-timeout: 5s }

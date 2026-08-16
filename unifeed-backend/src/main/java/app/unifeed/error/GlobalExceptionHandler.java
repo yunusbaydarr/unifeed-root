@@ -9,8 +9,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -32,6 +34,17 @@ public class GlobalExceptionHandler {
         List<Map<String, String>> errors = ex.getBindingResult().getFieldErrors().stream()
             .map(e -> Map.of("field", e.getField(), "message", e.getDefaultMessage() == null ? "" : e.getDefaultMessage())).toList();
         return problem(HttpStatus.BAD_REQUEST, ErrorCode.COMMON_001_VALIDATION_FAILED, request, locale, errors);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ProblemDetail malformedJson(HttpMessageNotReadableException ex, HttpServletRequest request, Locale locale) {
+        return problem(HttpStatus.BAD_REQUEST, ErrorCode.COMMON_001_VALIDATION_FAILED, request, locale, null);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    ProblemDetail conflict(DataIntegrityViolationException ex, HttpServletRequest request, Locale locale) {
+        log.warn("Data integrity conflict at {}", request.getRequestURI());
+        return problem(HttpStatus.CONFLICT, ErrorCode.COMMON_409_CONFLICT, request, locale, null);
     }
 
     @ExceptionHandler(Exception.class)

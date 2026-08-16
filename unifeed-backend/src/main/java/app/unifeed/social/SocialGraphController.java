@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank; import java.util.*; import org.s
  @PutMapping("/posts/{id}/like") Map<String,Boolean> like(@PathVariable UUID id,Authentication a){service.like(id,user(a));return Map.of("liked",true);}
  @DeleteMapping("/posts/{id}/like") Map<String,Boolean> unlike(@PathVariable UUID id,Authentication a){service.unlike(id,user(a));return Map.of("liked",false);}
  @PostMapping("/posts/{id}/comments") Map<String,UUID> comment(@PathVariable UUID id,@RequestBody CommentRequest r,Authentication a){return Map.of("id",service.comment(id,user(a),r.parentId,r.content));}
+ @GetMapping("/posts/{id}/comments") List<SocialGraphService.CommentDto> comments(@PathVariable UUID id){return service.comments(id);}
  @PutMapping("/users/{id}/follow") Map<String,Boolean> follow(@PathVariable UUID id,Authentication a){service.follow(user(a),id);return Map.of("following",true);}
+ @DeleteMapping("/users/{id}/follow") Map<String,Boolean> unfollow(@PathVariable UUID id,Authentication a){service.unfollow(user(a),id);return Map.of("following",false);}
  record CommentRequest(UUID parentId,@NotBlank String content){}
 }

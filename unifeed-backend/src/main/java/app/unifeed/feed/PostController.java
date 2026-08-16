@@ -1,6 +1,7 @@
 package app.unifeed.feed;
-import jakarta.validation.constraints.NotBlank; import java.util.*; import org.springframework.jdbc.core.JdbcTemplate; import org.springframework.security.core.Authentication; import org.springframework.transaction.annotation.Transactional; import org.springframework.web.bind.annotation.*;
-@RestController @RequestMapping("/api/v1/posts") public class PostController {private final JdbcTemplate jdbc;public PostController(JdbcTemplate j){jdbc=j;}
- @PostMapping @Transactional Map<String,UUID> create(@RequestBody CreatePost r,Authentication a){UUID id=UUID.randomUUID();jdbc.update("INSERT INTO posts(id,author_id,content) VALUES(?,?,?)",id,UUID.fromString(a.getName()),r.content);if(r.mediaPaths!=null)for(int i=0;i<Math.min(r.mediaPaths.size(),10);i++)jdbc.update("INSERT INTO post_media(id,post_id,media_path,order_index,media_type) VALUES(?,?,?,?,?)",UUID.randomUUID(),id,r.mediaPaths.get(i),i+1,"IMAGE");return Map.of("id",id);}
- record CreatePost(@NotBlank String content,List<String> mediaPaths){}
-}
+import app.unifeed.common.CurrentUser; import jakarta.validation.Valid; import jakarta.validation.constraints.*; import java.time.Instant; import java.util.*; import org.springframework.security.core.Authentication; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/v1/posts") public class PostController {private final PostService service;public PostController(PostService service){this.service=service;}
+ @PostMapping Map<String,UUID> create(@Valid @RequestBody CreatePost r,Authentication a){return Map.of("id",service.create(CurrentUser.id(a),r));}
+ @GetMapping("/{id}") PostDto get(@PathVariable UUID id,Authentication a){return service.get(id,CurrentUser.id(a));}
+ @DeleteMapping("/{id}") void delete(@PathVariable UUID id,Authentication a){service.delete(id,CurrentUser.id(a));}
+ record CreatePost(@NotBlank @Size(max=5000)String content,@Size(max=10)List<@NotBlank String>mediaPaths){} public record PostDto(UUID id,UUID authorId,String authorName,String authorAvatarPath,String content,int likeCount,int commentCount,Instant createdAt,boolean liked,List<String>mediaPaths){} }

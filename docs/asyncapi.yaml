@@ -1,0 +1,60 @@
+asyncapi: 3.0.0
+info:
+  title: UniFeed Realtime API
+  version: 1.0.0
+  description: STOMP over SockJS contract exposed by the Spring backend.
+servers:
+  development:
+    host: localhost:8080
+    pathname: /ws
+    protocol: stomp
+channels:
+  chatSend:
+    address: /app/chat.send/{threadId}
+    messages:
+      chatMessage: { $ref: '#/components/messages/ChatMessage' }
+  chatReceive:
+    address: /topic/chat/{threadId}
+    messages:
+      message: { $ref: '#/components/messages/Message' }
+  notifications:
+    address: /user/queue/notifications
+    messages:
+      notification: { $ref: '#/components/messages/Notification' }
+  authRefresh:
+    address: /app/auth.refresh
+    description: Send a fresh Authorization Bearer header; the interceptor consumes the bodyless frame.
+operations:
+  sendChat: { action: send, channel: { $ref: '#/channels/chatSend' } }
+  receiveChat: { action: receive, channel: { $ref: '#/channels/chatReceive' } }
+  receiveNotification: { action: receive, channel: { $ref: '#/channels/notifications' } }
+  refreshAuthentication: { action: send, channel: { $ref: '#/channels/authRefresh' } }
+components:
+  messages:
+    ChatMessage:
+      payload:
+        type: object
+        required: [content]
+        properties:
+          content: { type: string, minLength: 1 }
+    Message:
+      payload:
+        type: object
+        required: [id, threadId, senderId, content, sentAt]
+        properties:
+          id: { type: string, format: uuid }
+          threadId: { type: string, format: uuid }
+          senderId: { type: string, format: uuid }
+          content: { type: string }
+          sentAt: { type: string, format: date-time }
+          readAt: { type: [string, 'null'], format: date-time }
+    Notification:
+      payload:
+        type: object
+        required: [id, type, payload, createdAt]
+        properties:
+          id: { type: string, format: uuid }
+          type: { type: string }
+          payload: { type: object, additionalProperties: true }
+          readAt: { type: [string, 'null'], format: date-time }
+          createdAt: { type: string, format: date-time }
